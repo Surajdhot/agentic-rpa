@@ -1,7 +1,5 @@
 """The execute node: run the current step by calling its MCP tool."""
 
-from __future__ import annotations
-
 import logging
 
 from langchain_core.runnables import RunnableConfig
@@ -13,7 +11,7 @@ from state import ConductorState
 logger = logging.getLogger(__name__)
 
 
-async def execute_node(state: ConductorState, runnable_config: RunnableConfig) -> dict[str, object]:
+async def execute_node(state: ConductorState, config: RunnableConfig) -> dict[str, object]:
     """Execute the step at ``current_index`` via the MCP client.
 
     The step is logged before execution for auditing. Success and failure are
@@ -22,14 +20,14 @@ async def execute_node(state: ConductorState, runnable_config: RunnableConfig) -
 
     Args:
         state: The current graph state.
-        runnable_config: LangGraph config carrying the MCP client.
+        config: LangGraph runnable config carrying the MCP client.
 
     Returns:
         A partial state update appending one result and advancing the cursor.
     """
     step = state["steps"][state["current_index"]]
     logger.info("AUDIT execute step=%d tool=%s args=%s", step.index, step.tool, step.args)
-    client = client_from_config(runnable_config)
+    client = client_from_config(config)
     try:
         output = await client.call_tool(step.tool, step.args)
         result = StepResult(step=step, status="success", output=output)

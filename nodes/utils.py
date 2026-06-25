@@ -110,10 +110,13 @@ def to_steps(items: list[dict[str, Any]], start_index: int, max_new: int) -> lis
 def client_from_config(runnable_config: RunnableConfig) -> MCPClient:
     """Pull the MCP client injected into the LangGraph runnable config.
 
+    Any object exposing ``list_tools`` and ``call_tool`` is accepted, so tests
+    can inject a lightweight fake in place of a real :class:`MCPClient`.
+
     Raises:
-        RuntimeError: if no client was provided.
+        RuntimeError: if no usable client was provided.
     """
     client = (runnable_config.get("configurable") or {}).get("mcp_client")
-    if not isinstance(client, MCPClient):
+    if client is None or not hasattr(client, "call_tool"):
         raise RuntimeError("No MCP client found in runnable config.")
     return client

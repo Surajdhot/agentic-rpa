@@ -1,12 +1,10 @@
 """The replan node: revise the remaining plan after a step fails."""
 
-from __future__ import annotations
-
 import logging
 
 from langchain_core.runnables import RunnableConfig
 
-import config
+from config import MAX_STEPS
 from llm import ainvoke_text
 from models import StepResult
 from nodes.utils import client_from_config, extract_json_array, format_tools, render_prompt, to_steps
@@ -26,7 +24,7 @@ def _summarise_results(results: list[StepResult]) -> str:
     return "\n".join(lines)
 
 
-async def replan_node(state: ConductorState, runnable_config: RunnableConfig) -> dict[str, object]:
+async def replan_node(state: ConductorState, config: RunnableConfig) -> dict[str, object]:
     """Replace the failed step and everything after it with a revised plan.
 
     Steps that already succeeded are kept; the failed step onward is regenerated
@@ -35,7 +33,7 @@ async def replan_node(state: ConductorState, runnable_config: RunnableConfig) ->
 
     Args:
         state: The current graph state (last result must be a failure).
-        runnable_config: LangGraph config carrying the MCP client.
+        config: LangGraph runnable config carrying the MCP client.
 
     Returns:
         A partial state update with revised steps, cursor, and replan count.
@@ -43,7 +41,7 @@ async def replan_node(state: ConductorState, runnable_config: RunnableConfig) ->
     failed_index = state["current_index"] - 1
     kept = state["steps"][:failed_index]
     failure = state["results"][-1]
-    client = client_from_config(runnable_config)
+    client = client_from_config(config)
     prompt = render_prompt(
         "replan.txt",
         instruction=state["instruction"],
@@ -53,7 +51,7 @@ async def replan_node(state: ConductorState, runnable_config: RunnableConfig) ->
         error=failure.error or "unknown error",
     )
     raw = await ainvoke_text(prompt)
-    budget = config.MAX_STEPS - len(kept)
+    budget = MAX_STEPS - len(kept)
     revised = to_steps(extract_json_array(raw), start_index=failed_index, max_new=budget)
     logger.info("Replanned: kept %d, revised %d step(s)", len(kept), len(revised))
     return {
