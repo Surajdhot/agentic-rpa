@@ -69,7 +69,7 @@ class PlaywrightBackend:
         Raises:
             ValueError: if the resolved path escapes OUTPUT_DIR.
         """
-        base = config.ensure_output_dir()
+        base = config.ensure_output_dir().resolve()
         candidate = (base / name).resolve()
         if not candidate.is_relative_to(base):
             raise ValueError(f"Path {name!r} escapes the output sandbox.")
