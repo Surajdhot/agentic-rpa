@@ -1,0 +1,10 @@
+CLAUDE.md
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+venv/
+.venv/
+output/
+.DS_Store
