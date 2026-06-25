@@ -1,0 +1,13 @@
+services:
+  conductor:
+    build: .
+    image: conductor:latest
+    container_name: conductor
+    ports:
+      - "8501:8501"
+    env_file:
+      - .env
+    volumes:
+      # Persist screenshots and saved files produced by the agent.
+      - ./output:/app/output
+    restart: unless-stopped
