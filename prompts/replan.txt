@@ -18,6 +18,10 @@ goal. Do not repeat steps that already succeeded. You may change selectors,
 add a recovery step, or take a different approach — but use only the tools
 listed above.
 
+To reuse text from an earlier step, reference it in a later step's args with
+{{last_output}} (the previous step's result) or {{step_N_output}} (the result
+of the step at 0-based index N).
+
 Respond with ONLY a JSON array of steps, each with "tool", "args", and
 "description", in the same format as the original plan. Maximum 15 steps total.
 If the goal cannot be achieved, return an empty array: [].

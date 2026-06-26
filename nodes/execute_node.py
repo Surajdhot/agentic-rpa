@@ -5,7 +5,7 @@ import logging
 from langchain_core.runnables import RunnableConfig
 
 from models import StepResult
-from nodes.utils import client_from_config
+from nodes.utils import client_from_config, resolve_args
 from state import ConductorState
 
 logger = logging.getLogger(__name__)
@@ -27,9 +27,10 @@ async def execute_node(state: ConductorState, config: RunnableConfig) -> dict[st
     """
     step = state["steps"][state["current_index"]]
     logger.info("AUDIT execute step=%d tool=%s args=%s", step.index, step.tool, step.args)
+    args = resolve_args(step.args, state["results"])
     client = client_from_config(config)
     try:
-        output = await client.call_tool(step.tool, step.args)
+        output = await client.call_tool(step.tool, args)
         result = StepResult(step=step, status="success", output=output)
     except Exception as exc:  # noqa: BLE001 - failures are recorded, not raised
         logger.warning("Step %d (%s) failed: %s", step.index, step.tool, exc)

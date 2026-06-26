@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
@@ -15,12 +16,18 @@ from langchain_core.runnables import RunnableConfig
 
 import config
 from mcp_client import MCPClient
-from models import Step
+from models import Step, StepResult
 
 logger = logging.getLogger(__name__)
 
 #: Directory holding the .txt prompt templates.
 PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
+
+#: Matches references to earlier step outputs inside a step's arguments,
+#: e.g. ``{{last_output}}`` or ``{{step_2_output}}``.
+_OUTPUT_REF = re.compile(
+    r"\{\{\s*(last_output|previous_output|PREVIOUS_STEP_RESULT|step_(\d+)_output)\s*\}\}"
+)
 
 
 def render_prompt(filename: str, **values: str) -> str:
@@ -120,3 +127,50 @@ def client_from_config(runnable_config: RunnableConfig) -> MCPClient:
     if client is None or not hasattr(client, "call_tool"):
         raise RuntimeError("No MCP client found in runnable config.")
     return client
+
+
+def _last_output(results: list[StepResult]) -> str:
+    """Return the most recent successful step output, or empty string."""
+    for result in reversed(results):
+        if result.status == "success" and result.output:
+            return result.output
+    return ""
+
+
+def _step_output(results: list[StepResult], index: int) -> str:
+    """Return the successful output of the step with ``index``, or empty."""
+    for result in reversed(results):
+        if result.step.index == index and result.status == "success":
+            return result.output
+    return ""
+
+
+def _resolve_token(match: "re.Match[str]", results: list[StepResult]) -> str:
+    """Resolve a single output-reference token to its concrete value."""
+    step_num = match.group(2)
+    value = _step_output(results, int(step_num)) if step_num else _last_output(results)
+    if not value:
+        logger.warning("Output reference %r resolved to empty text", match.group(0))
+    return value
+
+
+def resolve_args(args: Any, results: list[StepResult]) -> Any:
+    """Substitute ``{{...output}}`` references in step args with prior results.
+
+    Walks strings, dicts, and lists so references can appear anywhere in the
+    arguments. Unknown or unavailable references resolve to an empty string.
+
+    Args:
+        args: The step's raw arguments (any JSON-like structure).
+        results: Outcomes of previously executed steps.
+
+    Returns:
+        The arguments with every output reference replaced by real text.
+    """
+    if isinstance(args, str):
+        return _OUTPUT_REF.sub(lambda m: _resolve_token(m, results), args)
+    if isinstance(args, dict):
+        return {key: resolve_args(value, results) for key, value in args.items()}
+    if isinstance(args, list):
+        return [resolve_args(item, results) for item in args]
+    return args

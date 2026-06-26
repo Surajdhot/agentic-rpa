@@ -26,3 +26,12 @@ Rules:
 - save_to_file args: {"filename": "a-plain-filename", "content": "..."};
   files are written to a sandboxed output folder, so use a plain filename.
 - Keep the plan minimal, ordered, and at most 15 steps.
+
+Passing data between steps:
+- To reuse the text returned by an earlier step, put a reference in a later
+  step's args. Use {{last_output}} for the previous step's result, or
+  {{step_N_output}} for the result of the step at index N (0-based).
+- Example: read a value, then save it —
+  {"tool": "read_text", "args": {"selector": "h1"}, "description": "read title"},
+  {"tool": "save_to_file", "args": {"filename": "title.txt",
+    "content": "{{last_output}}"}, "description": "save the title"}

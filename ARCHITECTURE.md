@@ -54,6 +54,12 @@ State is a `TypedDict` with an `Annotated` reducer on `results`, so each
 `execute` appends its `StepResult` instead of overwriting the list. A
 `MAX_REPLANS` counter caps the failure-recovery loop.
 
+**Data flow between steps.** A later step can reuse an earlier step's output by
+putting a reference in its args: `{{last_output}}` (the previous result) or
+`{{step_N_output}}` (the step at 0-based index N). `execute_node` resolves these
+against the accumulated results just before calling the tool, so a plan like
+*read a heading → save it to a file* actually carries the scraped text through.
+
 ## The MCP layer
 
 The agent's only way to act on the world is by calling MCP tools. This is a
