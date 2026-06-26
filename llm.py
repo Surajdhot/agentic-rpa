@@ -34,6 +34,9 @@ def get_llm() -> ChatGoogleGenerativeAI:
         model=config.MODEL,
         temperature=config.LLM_TEMPERATURE,
         google_api_key=config.GOOGLE_API_KEY,
+        # We run our own 429 backoff (see ainvoke_text); disabling the client's
+        # internal retries stops the two from compounding into minute-long hangs.
+        max_retries=0,
     )
 
 

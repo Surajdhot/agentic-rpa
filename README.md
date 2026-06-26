@@ -87,14 +87,15 @@ never opens a real browser.
 | Variable         | Default            | Notes                                            |
 | ---------------- | ------------------ | ------------------------------------------------ |
 | `GOOGLE_API_KEY` | *(required)*       | Free Google AI Studio key.                       |
-| `MODEL`          | `gemini-2.0-flash` | Any free Gemini Flash model (e.g. `gemini-2.5-flash`). |
+| `MODEL`          | `gemini-2.5-flash` | Any free Gemini Flash model (e.g. `gemini-2.5-flash-lite`). |
 | `LOG_LEVEL`      | `INFO`             | Standard Python logging level.                   |
 
 Other limits (max steps, max replans, output directory) live in
 [config.py](config.py).
 
-> **Model note:** the default is `gemini-2.0-flash`, which is available on the
-> free tier. If you prefer, set `MODEL=gemini-2.5-flash` in `.env`.
+> **Model note:** the default is `gemini-2.5-flash`, which is available on the
+> free tier. (`gemini-2.0-flash` currently has a free-tier request limit of 0
+> and will fail with a 429.) `gemini-2.5-flash-lite` also works.
 
 ## Safety
 

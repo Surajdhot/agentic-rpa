@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- LLM settings -----------------------------------------------------------
-MODEL: str = os.getenv("MODEL", "gemini-2.0-flash")
+MODEL: str = os.getenv("MODEL", "gemini-2.5-flash")
 LLM_TEMPERATURE: float = 0.0
 LLM_MAX_RETRIES: int = 3
 LLM_BACKOFF_SECONDS: tuple[int, ...] = (4, 8, 16)
